@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CreatorFlow - Authorization</title>
+    <title>CreatorFlow - Connected</title>
     <style>
-        body { font-family: -apple-system, sans-serif; max-width: 600px; margin: 100px auto; padding: 0 20px; color: #333; text-align: center; }
-        .code { background: #f0f0f0; padding: 16px 24px; border-radius: 8px; font-family: monospace; font-size: 1.2em; word-break: break-all; margin: 20px 0; user-select: all; }
-        .success { color: #0a0; }
-        .error { color: #c00; }
-        button { padding: 10px 24px; font-size: 1em; border: none; background: #0070f3; color: white; border-radius: 6px; cursor: pointer; }
-        button:hover { background: #005bd4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { text-align: center; max-width: 480px; padding: 0 24px; }
+        .checkmark { width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 50%; background: linear-gradient(135deg, #25F4EE, #FE2C55); display: flex; align-items: center; justify-content: center; animation: pop 0.4s ease-out; }
+        .checkmark svg { width: 40px; height: 40px; stroke: #fff; stroke-width: 3; fill: none; stroke-dasharray: 50; stroke-dashoffset: 50; animation: draw 0.5s 0.3s ease-out forwards; }
+        @keyframes pop { 0% { transform: scale(0); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        h1 { font-size: 1.6em; margin-bottom: 8px; }
+        .subtitle { color: #888; font-size: 1.05em; line-height: 1.5; }
+        .error-icon { width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 50%; background: #c00; display: flex; align-items: center; justify-content: center; font-size: 2em; }
+        .code-box { background: #1a1a1a; border: 1px solid #333; padding: 16px 24px; border-radius: 8px; font-family: monospace; font-size: 0.9em; word-break: break-all; margin: 24px 0; user-select: all; color: #aaa; display: none; }
+        .toggle { color: #555; font-size: 0.8em; cursor: pointer; margin-top: 16px; text-decoration: underline; }
+        .toggle:hover { color: #888; }
     </style>
 </head>
 <body>
-    <h1>CreatorFlow</h1>
-    <div id="result"></div>
+    <div class="container" id="result"></div>
     <script>
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
@@ -24,15 +30,26 @@
 
         if (code) {
             el.innerHTML = `
-                <p class="success">Authorization successful!</p>
-                <p>Copy this code and paste it in your terminal:</p>
-                <div class="code">${code}</div>
-                <button onclick="navigator.clipboard.writeText('${code}')">Copy code</button>
+                <div class="checkmark">
+                    <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
+                </div>
+                <h1>Connected to TikTok!</h1>
+                <p class="subtitle">Your account is linked to CreatorFlow.<br>You can now create and publish videos.</p>
+                <div class="code-box" id="codeBox">${code}</div>
+                <p class="toggle" onclick="document.getElementById('codeBox').style.display='block'; this.style.display='none';">Show authorization code</p>
             `;
         } else if (error) {
-            el.innerHTML = `<p class="error">Authorization failed: ${error}</p>`;
+            el.innerHTML = `
+                <div class="error-icon">✕</div>
+                <h1>Connection failed</h1>
+                <p class="subtitle">${error}</p>
+            `;
         } else {
-            el.innerHTML = `<p>No authorization code received.</p>`;
+            el.innerHTML = `
+                <div class="error-icon">?</div>
+                <h1>No authorization received</h1>
+                <p class="subtitle">Please try again from the home page.</p>
+            `;
         }
     </script>
 </body>
