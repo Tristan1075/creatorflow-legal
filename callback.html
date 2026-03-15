@@ -3,54 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CreatorFlow - Connected</title>
+    <title>CreatorFlow - Connecting...</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
         .container { text-align: center; max-width: 480px; padding: 0 24px; }
-        .checkmark { width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 50%; background: linear-gradient(135deg, #25F4EE, #FE2C55); display: flex; align-items: center; justify-content: center; animation: pop 0.4s ease-out; }
+        .spinner { width: 48px; height: 48px; border: 3px solid #333; border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 24px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .checkmark { width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); display: flex; align-items: center; justify-content: center; animation: pop 0.4s ease-out; }
         .checkmark svg { width: 40px; height: 40px; stroke: #fff; stroke-width: 3; fill: none; stroke-dasharray: 50; stroke-dashoffset: 50; animation: draw 0.5s 0.3s ease-out forwards; }
         @keyframes pop { 0% { transform: scale(0); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
         @keyframes draw { to { stroke-dashoffset: 0; } }
         h1 { font-size: 1.6em; margin-bottom: 8px; }
         .subtitle { color: #888; font-size: 1.05em; line-height: 1.5; }
         .error-icon { width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 50%; background: #c00; display: flex; align-items: center; justify-content: center; font-size: 2em; }
-        .code-box { background: #1a1a1a; border: 1px solid #333; padding: 16px 24px; border-radius: 8px; font-family: monospace; font-size: 0.9em; word-break: break-all; margin: 24px 0; user-select: all; color: #aaa; display: none; }
-        .toggle { color: #555; font-size: 0.8em; cursor: pointer; margin-top: 16px; text-decoration: underline; }
-        .toggle:hover { color: #888; }
+        .fallback { margin-top: 24px; display: none; }
+        .fallback a { color: #10b981; text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="container" id="result"></div>
+    <div class="container" id="result">
+        <div class="spinner"></div>
+        <h1>Connecting...</h1>
+        <p class="subtitle">Redirecting to dashboard...</p>
+    </div>
     <script>
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+        const state = params.get('state') || '';
         const error = params.get('error');
         const el = document.getElementById('result');
 
-        if (code) {
-            el.innerHTML = `
-                <div class="checkmark">
-                    <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
-                </div>
-                <h1>Connected to TikTok!</h1>
-                <p class="subtitle">Your account is linked to CreatorFlow.<br>You can now create and publish videos.</p>
-                <div class="code-box" id="codeBox">${code}</div>
-                <p class="toggle" onclick="document.getElementById('codeBox').style.display='block'; this.style.display='none';">Show authorization code</p>
-            `;
-        } else if (error) {
-            el.innerHTML = `
-                <div class="error-icon">✕</div>
-                <h1>Connection failed</h1>
-                <p class="subtitle">${error}</p>
-            `;
-        } else {
-            el.innerHTML = `
-                <div class="error-icon">?</div>
-                <h1>No authorization received</h1>
-                <p class="subtitle">Please try again from the home page.</p>
-            `;
+        // Dashboard URL — tries localhost first, can be changed to production
+        const DASHBOARD_URLS = [
+            'http://localhost:3000',
+        ];
+
+        async function redirect() {
+            if (error) {
+                el.innerHTML = `
+                    <div class="error-icon">✕</div>
+                    <h1>Connection failed</h1>
+                    <p class="subtitle">${error}</p>
+                `;
+                return;
+            }
+
+            if (!code) {
+                el.innerHTML = `
+                    <div class="error-icon">?</div>
+                    <h1>No authorization received</h1>
+                    <p class="subtitle">Please try again.</p>
+                `;
+                return;
+            }
+
+            // Try to redirect to dashboard callback
+            const callbackUrl = `${DASHBOARD_URLS[0]}/api/tiktok/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+            window.location.href = callbackUrl;
+
+            // Fallback after 3s if redirect didn't work
+            setTimeout(() => {
+                el.innerHTML = `
+                    <div class="checkmark">
+                        <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
+                    </div>
+                    <h1>Connected to TikTok!</h1>
+                    <p class="subtitle">Could not redirect to dashboard automatically.</p>
+                    <div style="margin-top:24px">
+                        <a href="${callbackUrl}" style="color:#10b981;text-decoration:underline;">Click here to complete setup</a>
+                    </div>
+                    <div style="background:#1a1a1a;border:1px solid #333;padding:16px;border-radius:8px;margin-top:16px;font-family:monospace;font-size:0.85em;color:#aaa;word-break:break-all;">
+                        Code: ${code}
+                    </div>
+                `;
+            }, 3000);
         }
+
+        redirect();
     </script>
 </body>
 </html>
